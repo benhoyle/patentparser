@@ -13,6 +13,8 @@ class Claim:
         """ Initiate claim object with string containing claim text."""
         # Load text
         self.text = claimstring
+        # Check for and extract claim number
+        self.number, self.text = self.get_number()
         # Tokenise text into words
         self.words = nltk.word_tokenize(self.text)
         # Label parts of speech - uses averaged_perceptron_tagger as downloaded above
@@ -21,6 +23,16 @@ class Claim:
     def nouns(self):
         """ Return the nouns from the claim."""
         return [word for word, part in self.pos if "NN" in part]
+    
+    def get_number(self):
+        """Extracts the claim number from the text."""
+        p = re.compile('\d+\.')
+        located = p.search(self.text)
+        if located:
+            # Set claim number as digit before fullstop
+            number = int(located.group()[:-1])
+            text = self.text[located.end():].strip()
+        return number, text
     
     def detect_category(self):
         """Attempts to determine and return a string containing the claim category."""
