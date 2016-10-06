@@ -6,6 +6,23 @@ import nltk
 #nltk.download("stopwords")
 #nltk.download("averaged_perceptron_tagger")
 
+def traverse(t, np=False):
+    try:
+        t.label()
+    except AttributeError:
+        # This is then a tuple e.g. ('A', 'DT') which is a leaf of the tree
+        if np:
+            print(t[0], end=" ")
+    else:
+        # Now we know that t.node is defined
+        if "S" in t.label():
+            for child in t:
+                traverse(child)
+        elif "NP" in t.label():
+            for child in t:
+                traverse(child, np=True)
+            print("")
+
 class Claim:
     """ Object to model a patent claim."""
 
@@ -15,10 +32,18 @@ class Claim:
         self.text = claimstring
         # Check for and extract claim number
         self.number, self.text = self.get_number()
+        # Get category
+        self.category = self.detect_category()
+        # Get dependency
+        self.dependency = self.detect_dependency()
+        
         # Tokenise text into words
         self.words = nltk.word_tokenize(self.text)
         # Label parts of speech - uses averaged_perceptron_tagger as downloaded above
         self.pos = nltk.pos_tag(self.words)
+        
+        #Split claim into features
+        self.features = self.split_into_features()
     
     def nouns(self):
         """ Return the nouns from the claim."""
@@ -32,6 +57,9 @@ class Claim:
             # Set claim number as digit before fullstop
             number = int(located.group()[:-1])
             text = self.text[located.end():].strip()
+        else:
+            number = None
+            text = self.text
         return number, text
     
     def detect_category(self):
@@ -54,7 +82,13 @@ class Claim:
             '''
         cp = nltk.RegexpParser(grammar)
         # Or store as part of claim object property?
+        
+        # Option: split into features / clauses, run over clauses and then re-correlate
         return cp.parse(self.pos)
+        
+    def print_nps(self):
+        ent_tree = self.determine_entities()
+        traverse(ent_tree)
 
     def detect_dependency(self):
         """Attempts to determine if the claim set out in text is dependent - if it is dependency is returned - if claim is deemed independent 0 is returned as dependency """
@@ -88,7 +122,7 @@ class Claim:
             feature['startindex'] = startindex
             endindex = match.end()
             feature['endindex'] = endindex
-            feature['text'] = text[startindex:endindex]
+            feature['text'] = self.text[startindex:endindex]
             featurelist.append(feature)
             startindex = endindex
         # Try spliting on ';' or ',' followed by '\n' or ':'
