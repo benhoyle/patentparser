@@ -21,6 +21,8 @@ def number_search(number):
 def claim_handler():
     with open(os.path.join(__location__,'claimdata.json'), 'r') as f:
         claimdata = json.loads(f.read())
+        # Add consecutive numbered keys for React
+        words = [{'id':i, 'word':item['word'], 'pos':item['pos']} for i, item in list(enumerate(claimdata['words']))]
 
     if request.method == 'POST':
         pass
@@ -32,7 +34,7 @@ def claim_handler():
             #f.write(json.dumps(claimdata, indent=4, separators=(',', ': ')))
 
     return Response(
-        json.dumps(claimdata),
+        json.dumps({"words":words}),
         mimetype='application/json',
         headers={
             'Cache-Control': 'no-cache',

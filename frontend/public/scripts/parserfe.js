@@ -1,7 +1,7 @@
 /* Parser Front End - Javascript  File */
 
 /* Test Data */
-var words = [
+var wordstest = [
     {
         id: 1,
         pos: "DT",
@@ -58,11 +58,28 @@ var SearchForm = React.createClass({
 });
 
 var ClaimBox = React.createClass({
-    
+    getInitialState: function() {
+        return {words: []};
+    },
+    componentDidMount: function() {
+        $.ajax({
+            url: this.props.url,
+            dataType: 'json',
+            cache: false,
+            success: function(data) {
+                this.setState({words: data.words});
+                console.info(this.props.url, data);
+                console.info(wordstest);
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error(this.props.url, status, err.toString());
+            }.bind(this)
+        });
+    },
     render: function() {
         return (
             <div className="claimBox">
-                <Claim words={this.props.words}/>
+                <Claim words={this.state.words}/>
             </div>
         );
     }
@@ -88,7 +105,7 @@ var Word = React.createClass({
     
     render: function() {
         return (
-            <div className="word col-md-1">
+            <div className="word col-xs-4 col-sm-3 col-md-2 col-lg-1">
                 <div className="row text-center lead">
                     <span>{this.props.text}</span>
                 </div>
@@ -114,6 +131,6 @@ ReactDOM.render(
 );
 
 ReactDOM.render(
-  <ClaimBox words={words}/>,
+  <ClaimBox url={"/api/claimdata"}/>,
   document.getElementById('content')
 );
