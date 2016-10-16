@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import sys
 import time
 from flask import Flask, Response, request
+
+from patentparser.core import Claim
 
 #[=========================== Server Setup ================================]
 # Set current module location (for opening test json file)
@@ -18,7 +21,6 @@ import epo_ops
 # Get client key and secret for OPS login from environment variables
 consumer_key = os.environ.get('C_KEY')
 consumer_secret = os.environ.get('C_SECRET')
-print(consumer_key, consumer_secret)
 
 #[=========================== Server Setup END =============================]
 
@@ -38,12 +40,19 @@ def number_search(number):
 
 
 # Need to change and configure this
-@app.route('/api/claimdata', methods=['GET', 'POST'])
-def claim_handler():
-    with open(os.path.join(__location__,'claimdata.json'), 'r') as f:
-        claimdata = json.loads(f.read())
-        # Add consecutive numbered keys for Reactgit@github.com:benhoyle/python-epo-ops-client.git
-        words = [{'id':i, 'word':item['word'], 'pos':item['pos']} for i, item in list(enumerate(claimdata['words']))]
+@app.route('/api/claimdata/<number>', methods=['GET', 'POST'])
+def claim_handler(number):
+    """ Perform a search on EPO OPS and return claim 1. """
+    # Setup a new registered EPO OPS client that returns JSON
+    registered_client = epo_ops.RegisteredClient(
+        key=consumer_key, 
+        secret=consumer_secret, 
+        accept_type='json')
+    claims = registered_client.published_claims(number)
+    #Add data cleansing here
+    claim = Claim(claims[0])
+    #print(number)
+    #claim = ""
 
     if request.method == 'POST':
         pass
@@ -55,7 +64,8 @@ def claim_handler():
             #f.write(json.dumps(claimdata, indent=4, separators=(',', ': ')))
 
     return Response(
-        json.dumps({"words":words}),
+        json.dumps(claim.json()),
+        #json.dumps("test"),
         mimetype='application/json',
         headers={
             'Cache-Control': 'no-cache',
@@ -63,6 +73,8 @@ def claim_handler():
         }
     )
 
+def main():
+    app.run(port=int(os.environ.get("PORT", 3000)), debug=True)
 
 if __name__ == '__main__':
-    app.run(port=int(os.environ.get("PORT", 3000)), debug=True)
+    main()

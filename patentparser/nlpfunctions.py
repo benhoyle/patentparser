@@ -31,7 +31,17 @@ def nouns(pos):
     """ Return the nouns from the claim.
     param: pos - list of tuples from nltk pos tagger"""
     return [word for word, part in pos if "NN" in part]
+
+def get_words(text):
+    """ Tokenise text into words. """
+    words = nltk.word_tokenize(text)
+    return words
     
+def get_pos(words):
+    """ Label parts of speech - uses averaged_perceptron_tagger """
+    pos = nltk.pos_tag(words)
+    return pos
+
 def get_number(text):
     """Extracts the claim number from the text."""
     p = re.compile('\d+\.')
@@ -119,10 +129,10 @@ def split_into_features(text):
 def clean_data(claim_data):
     """ Cleans and checks claim data returned from EPO OPS. """
     
+    # If claims_data is a single string attempt to split into a list
     if not isinstance(claim_data, list):
-        # If claims_data is a single string attempt to split into a list
         claim_data = extract_claims(claim_data)
-
+    
     claims = [get_number(claim) for claim in claims_list]
     
     for claim_no in range(1, len(claims)):

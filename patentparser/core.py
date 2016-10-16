@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .nlpfunctions import get_number, detect_category, determine_entities, \
+from patentparser.nlpfunctions import get_number, detect_category, determine_entities, \
                         detect_dependency, nouns, split_into_features, \
-                        split_into_features, 
+                        split_into_features, get_words, get_pos 
 
 #Download NLTK modules if not already present
 #nltk.download("punkt")
@@ -26,7 +26,7 @@ class Claimset:
     pass
 
 class Figures:    
-""" Object to model a set of patent figures. """
+    """ Object to model a set of patent figures. """
     pass
 
 class Claim:
@@ -37,19 +37,23 @@ class Claim:
         # Load text
         self.text = claimstring
         # Check for and extract claim number
-        self.number, self.text = self.get_number()
+        self.number, self.text = get_number(claimstring)
         # Get category
-        self.category = self.detect_category()
+        self.category = detect_category(self.text)
         # Get dependency
-        self.dependency = self.detect_dependency()
+        self.dependency = detect_dependency(self.text)
         
         # Tokenise text into words
-        self.words = nltk.word_tokenize(self.text)
+        self.words = get_words(self.text)
         # Label parts of speech - uses averaged_perceptron_tagger as downloaded above
-        self.pos = nltk.pos_tag(self.words)
+        self.pos = get_pos(self.words)
         
         #Split claim into features
-        self.features = self.split_into_features()
+        self.features = split_into_features(self.text)
 
-
+    def json(self):
+        """ Provide words as JSON. """
+        # Add consecutive numbered ids for Reactgit@github.com:benhoyle/python-epo-ops-client.git
+        words = [{"id": i, "word":word, "pos":part} for i, (word, part) in list(enumerate(self.pos))]
+        return {"claim":{ "words":words }}
 
