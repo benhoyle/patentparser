@@ -51,8 +51,6 @@ def claim_handler(number):
     claims = registered_client.published_claims(number)
     #Add data cleansing here
     claim = Claim(claims[0])
-    #print(number)
-    #claim = ""
 
     if request.method == 'POST':
         pass
@@ -65,7 +63,6 @@ def claim_handler(number):
 
     return Response(
         json.dumps(claim.json()),
-        #json.dumps("test"),
         mimetype='application/json',
         headers={
             'Cache-Control': 'no-cache',

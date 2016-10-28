@@ -5,7 +5,7 @@
 # == IMPORTS =============================================================#
 import re
 import nltk
-
+import itertools
 # == IMPORTS END =========================================================#
 
 # ========================== Claim Functions =============================#
@@ -26,6 +26,15 @@ def traverse(t, np=False):
             for child in t:
                 traverse(child, np=True)
             print("")
+
+def ends_with(s1, s2):
+    """See if s1 ends with s2."""
+    pattern = re.compile(r'(' + re.escape(s2) + ')$')
+    located = pattern.search(s1)
+    if located:
+        return True
+    else:
+        return False
             
 def nouns(pos):
     """ Return the nouns from the claim.
@@ -41,6 +50,11 @@ def get_pos(words):
     """ Label parts of speech - uses averaged_perceptron_tagger """
     pos = nltk.pos_tag(words)
     return pos
+
+def remove_ref_nums(text):
+    """ Remove reference numerals from the claim text. """
+    pass
+
 
 def get_number(text):
     """Extracts the claim number from the text."""
@@ -124,6 +138,28 @@ def split_into_features(text):
     # This also removes the characters - we want to keep them - back to search method?
     # Or store as part of claim object property?
     return featurelist
+    
+def label_nounphrases(ptree):
+    """ Label noun phrases in the output from pos chunking. """
+    subtrees = ptree.subtrees(filter=lambda x: x.label()=='NP')
+    
+    # build up mapping dict - if not in dict add new entry id+1; if in dict label using key
+    mapping_dict = {}
+    pos_to_np = []
+    for st in subtrees:
+        np_string = " ".join([leaf[0] for leaf in st.leaves() if leaf[1] != ("DT" or "PRP$")])
+        np_id = mapping_dict.get(np_string, None)
+        if not np_id:
+            # put ends_with here
+            nps = [i[0] for i in mapping_dict.items()]
+            ends_with_list = [np for np in nps if ends_with(np_string, np)]
+            if ends_with_list:
+                np_id = mapping_dict[ends_with_list[0]]
+            else:
+                np_id = len(mapping_dict)+1
+                mapping_dict[np_string] = np_id
+        pos_to_np.append((st.parent_index(), np_id))
+    return (pos_to_np, mapping_dict)
     
 # ========================== Claimset Functions ============================#
 def clean_data(claim_data):

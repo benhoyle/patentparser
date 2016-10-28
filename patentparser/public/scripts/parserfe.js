@@ -14,7 +14,7 @@ var PatentParser = React.createClass({
             dataType: 'json',
             cache: false,
             success: function(data) {
-                console.info(data);
+                //console.info(data);
                 this.setState({claim: data.claim});
             }.bind(this),
             error: function(xhr, status, err) {
