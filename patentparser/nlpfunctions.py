@@ -159,7 +159,19 @@ def label_nounphrases(ptree):
                 np_id = len(mapping_dict)+1
                 mapping_dict[np_string] = np_id
         pos_to_np.append((st.parent_index(), np_id))
-    return (pos_to_np, mapping_dict)
+    
+    # Label Tree with entities
+    flat_list = []
+    for i in range(0, len(ptree)):
+        #print(i)
+        # Label 
+        if isinstance(ptree[i], Tree):
+            for leaf in ptree[i].leaves():
+                # Unpack leaf and add label as triple
+                flat_list.append((leaf[0], leaf[1], pos_to_np.get(i, "")))
+        else:
+            flat_list.append((ptree[i][0], ptree[i][1], pos_to_np.get(i, "")))
+    return (flat_list, mapping_dict)
     
 # ========================== Claimset Functions ============================#
 def clean_data(claim_data):
