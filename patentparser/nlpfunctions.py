@@ -139,13 +139,22 @@ def split_into_features(text):
     # Or store as part of claim object property?
     return featurelist
     
-def label_nounphrases(ptree):
+def label_nounphrases(pos):
     """ Label noun phrases in the output from pos chunking. """
+    grammar = '''
+        NP: {<DT|PRP\$> <VBG> <NN.*>+} 
+            {<DT|PRP\$> <NN.*> <POS> <JJ>* <NN.*>+}
+            {<DT|PRP\$>? <JJ>* <NN.*>+ }
+        '''
+
+    cp = nltk.RegexpParser(grammar)
+    result = cp.parse(pos)
+    ptree = nltk.tree.ParentedTree.convert(result)
     subtrees = ptree.subtrees(filter=lambda x: x.label()=='NP')
     
     # build up mapping dict - if not in dict add new entry id+1; if in dict label using key
     mapping_dict = {}
-    pos_to_np = []
+    pos_to_np = {}
     for st in subtrees:
         np_string = " ".join([leaf[0] for leaf in st.leaves() if leaf[1] != ("DT" or "PRP$")])
         np_id = mapping_dict.get(np_string, None)
@@ -158,14 +167,14 @@ def label_nounphrases(ptree):
             else:
                 np_id = len(mapping_dict)+1
                 mapping_dict[np_string] = np_id
-        pos_to_np.append((st.parent_index(), np_id))
+        pos_to_np[st.parent_index()] = np_id
     
     # Label Tree with entities
     flat_list = []
     for i in range(0, len(ptree)):
         #print(i)
         # Label 
-        if isinstance(ptree[i], Tree):
+        if isinstance(ptree[i], nltk.tree.Tree):
             for leaf in ptree[i].leaves():
                 # Unpack leaf and add label as triple
                 flat_list.append((leaf[0], leaf[1], pos_to_np.get(i, "")))

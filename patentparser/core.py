@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from patentparser.nlpfunctions import get_number, detect_category, determine_entities, \
-                        detect_dependency, nouns, split_into_features, \
-                        split_into_features, get_words, get_pos 
+import patentparser.nlpfunctions
+
+#from patentparser.nlpfunctions import get_number, detect_category, determine_entities, \
+                        #detect_dependency, nouns, split_into_features, \
+                        #split_into_features, get_words, get_pos 
 
 #Download NLTK modules if not already present
 #nltk.download("punkt")
@@ -37,23 +39,26 @@ class Claim:
         # Load text
         self.text = claimstring
         # Check for and extract claim number
-        self.number, self.text = get_number(claimstring)
+        self.number, self.text = patentparser.nlpfunctions.get_number(claimstring)
         # Get category
-        self.category = detect_category(self.text)
+        self.category = patentparser.nlpfunctions.detect_category(self.text)
         # Get dependency
-        self.dependency = detect_dependency(self.text)
+        self.dependency = patentparser.nlpfunctions.detect_dependency(self.text)
         
         # Tokenise text into words
-        self.words = get_words(self.text)
+        self.words = patentparser.nlpfunctions.get_words(self.text)
         # Label parts of speech - uses averaged_perceptron_tagger as downloaded above
-        self.pos = get_pos(self.words)
+        self.pos = patentparser.nlpfunctions.get_pos(self.words)
+        # Apply chunking into noun phrases
+        (self.word_data, self.mapping_dict) = patentparser.nlpfunctions.label_nounphrases(self.pos)
         
         #Split claim into features
-        self.features = split_into_features(self.text)
+        self.features = patentparser.nlpfunctions.split_into_features(self.text)
 
     def json(self):
         """ Provide words as JSON. """
         # Add consecutive numbered ids for Reactgit@github.com:benhoyle/python-epo-ops-client.git
-        words = [{"id": i, "word":word, "pos":part} for i, (word, part) in list(enumerate(self.pos))]
+        #words = [{"id": i, "word":word, "pos":part} for i, (word, part) in list(enumerate(self.pos))]
+        words = [{"id": i, "word":word, "pos":part, "np":np} for i, (word, part, np) in list(enumerate(self.word_data))]
         return {"claim":{ "words":words }}
 
